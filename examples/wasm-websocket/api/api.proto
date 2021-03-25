@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package api;
+
+service EnforcerWebSocketService {
+  rpc PublishFrameData(stream WebSocketFrameRequest) returns (stream WebSocketFrameResponse) {}    
+}
+
+message WebSocketFrameRequest {
+  string name = 1;
+}
+
+message WebSocketFrameResponse {
+  string message = 1;
+}
+
+// this proto represents configuration for the example filter
+message Config {
+  string clustername = 1;
+}
