@@ -37,7 +37,7 @@ public:
   
 
 private:
-  MgwGrpcCallStreamHandler stream_handler_{};
+  MgwGrpcStreamHandler* stream_handler_{};
   bool is_stream_ = false;
 
 };

@@ -21,10 +21,10 @@ using api::WebSocketFrameRequest;
 using api::WebSocketFrameRequest;
 using api::Config;
 
-class MgwGrpcCallStreamHandler : public GrpcStreamHandler<WebSocketFrameRequest, WebSocketFrameRequest>, 
+class MgwGrpcStreamHandler : public GrpcStreamHandler<WebSocketFrameRequest, WebSocketFrameRequest>, 
                                  public StreamHanlderClient {
   public:
-    MgwGrpcCallStreamHandler(HandlerCallbacks *callbacks);
+    MgwGrpcStreamHandler(HandlerCallbacks *callbacks);
 
     void onReceive(size_t body_size) override;
 
