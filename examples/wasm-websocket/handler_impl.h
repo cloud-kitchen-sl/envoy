@@ -25,6 +25,7 @@ class MgwGrpcStreamHandler : public GrpcStreamHandler<WebSocketFrameRequest, Web
                                  public StreamHanlderClient {
   public:
     MgwGrpcStreamHandler(HandlerCallbacks *callbacks);
+    ~MgwGrpcStreamHandler() override;
 
     void onReceive(size_t body_size) override;
 
@@ -34,5 +35,6 @@ class MgwGrpcStreamHandler : public GrpcStreamHandler<WebSocketFrameRequest, Web
 
   private:
     HandlerCallbacks *callbacks_;
+    HandlerState handler_state_;
 
 };

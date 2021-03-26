@@ -14,7 +14,7 @@ enum class ResponseStatus{
     OverLimit,
 };
 
-enum class HanlderState{
+enum class HandlerState{
     OK,
     Error
 };
@@ -25,7 +25,7 @@ public:
 
     virtual void updateFilterState(ResponseStatus state);
 
-    virtual void updateHandlerState(HanlderState state);
+    virtual void updateHandlerState(HandlerState state);
 };
 
 class StreamHanlderClient{

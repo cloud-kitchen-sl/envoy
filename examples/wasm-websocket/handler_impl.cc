@@ -23,15 +23,20 @@ MgwGrpcStreamHandler::MgwGrpcStreamHandler(HandlerCallbacks *callbacks){
     callbacks_ = callbacks;
 }
 
+MgwGrpcStreamHandler::~MgwGrpcStreamHandler(){
+  LOG_INFO("XXXXXXXXXXXXXXXXXXX Handler destructed");
+}
+
 void MgwGrpcStreamHandler::onReceive(size_t body_size){
     LOG_INFO("gRPC streaming onReceive");
+    //this->callbacks_->setEffectiveContext();
     this->callbacks_->updateFilterState(ResponseStatus::OK);
 };
 
 void MgwGrpcStreamHandler::onRemoteClose(GrpcStatus status){
     LOG_INFO(std::string("gRPC streaming onRemoteClose") + std::to_string(static_cast<int>(status)));
     //this->*context_->updateConnectionStatus(false);
-    this->callbacks_->updateHandlerState(HanlderState::Error);
+    this->callbacks_->updateHandlerState(HandlerState::Error);
 };
 
 bool MgwGrpcStreamHandler::sendMessage(WebSocketFrameRequest request){

@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <sstream>
 
 #include "proxy_wasm_intrinsics.h"
 #include "proxy_wasm_intrinsics_lite.pb.h"
@@ -53,13 +54,16 @@ bool MgwWebSocketRootContext::onConfigure(size_t config_size) {
   return true;
 }
 
-void MgwWebSocketRootContext::onTick() { LOG_TRACE("onTick"); }
+// void MgwWebSocketRootContext::onTick() { //LOG_TRACE("onTick"); }
 
 void MgwWebSocketContext::onCreate() { LOG_INFO(std::string("onCreate " + std::to_string(id()))); }
 
 FilterHeadersStatus MgwWebSocketContext::onRequestHeaders(uint32_t, bool) {
   LOG_INFO(std::string("onRequestHeaders called ") + std::to_string(id()));
   this->stream_handler_ = new MgwGrpcStreamHandler(this);
+  std::stringstream pointer_address;
+  pointer_address << this->stream_handler_;
+  LOG_INFO("handler pointer created >>>"+ pointer_address.str());
   //this->stream_handler_ = MyGrpcCallStreamHandler<EchoRequest, EchoReply>(new MyGrpcCallStreamHandler(this));
   GrpcService grpc_service;
   MgwWebSocketRootContext *r = dynamic_cast<MgwWebSocketRootContext*>(root());
@@ -70,25 +74,25 @@ FilterHeadersStatus MgwWebSocketContext::onRequestHeaders(uint32_t, bool) {
   initial_metadata.push_back(std::pair("parent", "bar"));
   auto res1 = root()->grpcStreamHandler(grpc_service_string, EnforcerServiceName, PublishFrameData, initial_metadata, std::unique_ptr<GrpcStreamHandlerBase>(this->stream_handler_));
   if (res1 != WasmResult::Ok) {
-    LOG_ERROR("Calling gRPC server failed: " + toString(res1));
+    LOG_INFO(">>>>>>>>>>>>>>>>>>> Calling gRPC server failed: " + toString(res1));
   }else{
-    this->is_stream_ = true;
-    LOG_INFO(std::string("gRPC stream initiated"));     
+    this->handler_state_ = HandlerState::OK;
+    LOG_INFO(std::string(">>>>>>>>>>>>>>>>>>>> gRPC stream initiated"));     
   }
-  auto result = getRequestHeaderPairs();
-  auto pairs = result->pairs();
-  LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
-  for (auto& p : pairs) {
-    LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
-  }
+  // auto result = getRequestHeaderPairs();
+  // auto pairs = result->pairs();
+  // LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
+  // for (auto& p : pairs) {
+  //   LOG_INFO(std::string(p.first) + std::string(" -> ") + std::string(p.second));
+  // }
 
-  std::string jwt_string = "Hello !";
+  //std::string jwt_string = "Hello !";
   // if (!getValue(
   //         {"metadata", "filter_metadata", "envoy.filters.http.jwt_authn", "my_payload", "sub"}, &jwt_string)) {
   //   LOG_ERROR(std::string("filter_metadata Error ") + std::to_string(id()));
   // }
 
-  LOG_INFO(">>>>>>>>>>>>>  Calling GRPC for sub:" + jwt_string);
+  //LOG_INFO(">>>>>>>>>>>>>  Calling GRPC for sub:" + jwt_string);
   // ExampleRootContext *a = dynamic_cast<ExampleRootContext*>(root());
   // GrpcService grpc_service;
   // grpc_service.mutable_envoy_grpc()->set_cluster_name(a->config_.clustername());  
@@ -134,7 +138,7 @@ FilterDataStatus MgwWebSocketContext::onRequestBody(size_t body_buffer_length,
   std::string jwt_string = "Hello !";
   WebSocketFrameRequest request;
   request.set_name(jwt_string);
-  if(this->is_stream_ == true){
+  if(this->handler_state_ == HandlerState::OK){
     LOG_INFO(std::string("stream available sending message"));
     auto res = this->stream_handler_->send(request, false);
     if (res != WasmResult::Ok) {
@@ -161,7 +165,12 @@ void MgwWebSocketContext::onDone() { LOG_WARN(std::string("onDone " + std::to_st
 
 void MgwWebSocketContext::onLog() { LOG_WARN(std::string("onLog " + std::to_string(id()))); }
 
-void MgwWebSocketContext::onDelete() { LOG_WARN(std::string("onDelete " + std::to_string(id()))); }
+void MgwWebSocketContext::onDelete() { 
+  LOG_WARN(std::string("onDelete " + std::to_string(id())));
+  std::stringstream pointer_address;
+  pointer_address << this->stream_handler_;
+  LOG_INFO("handler pointer delete >>>"+ pointer_address.str());
+ }
 
 // void ExampleContext::updateConnectionStatus(bool status){
 //   this->is_stream_ = status;
@@ -171,7 +180,7 @@ void MgwWebSocketContext::updateFilterState(ResponseStatus status){
   LOG_INFO(std::string("updateFilterState") + std::to_string(static_cast<int>(status)));
 }
 
-void MgwWebSocketContext::updateHandlerState(HanlderState state){
+void MgwWebSocketContext::updateHandlerState(HandlerState state){
     LOG_INFO(std::string("updateHandlerState") + std::to_string(static_cast<int>(state)));
-
+    this->handler_state_ = state;
 }

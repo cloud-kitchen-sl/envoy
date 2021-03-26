@@ -13,7 +13,7 @@ public:
 
   bool onStart(size_t) override;
   bool onConfigure(size_t) override;
-  void onTick() override;
+  void onTick() override {};
 
   api::Config config_;
 };
@@ -33,12 +33,13 @@ public:
   void onDelete() override;
   
   void updateFilterState(ResponseStatus status) override;
-  void updateHandlerState(HanlderState state) override;
+  void updateHandlerState(HandlerState state) override;
   
 
 private:
   MgwGrpcStreamHandler* stream_handler_{};
-  bool is_stream_ = false;
+  HandlerState handler_state_;
+
 
 };
 
