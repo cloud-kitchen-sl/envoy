@@ -1,6 +1,7 @@
 #pragma once
 
 #include "proxy_wasm_intrinsics.h"
+//#include <google/protobuf/struct.pb.h>
 #include <memory>
 
 #include "examples/wasm-websocket/handler_impl.h"
@@ -15,7 +16,7 @@ public:
   bool onConfigure(size_t) override;
   void onTick() override {};
 
-  api::Config config_;
+  config::Config config_;
 };
 
 class MgwWebSocketContext : public Context , 
@@ -39,6 +40,7 @@ public:
 private:
   MgwGrpcStreamHandler* stream_handler_{};
   HandlerState handler_state_;
+  google::protobuf::Struct metadata_;
 
 
 };

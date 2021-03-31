@@ -8,18 +8,18 @@
 #include <unordered_map>
 
 #include "proxy_wasm_intrinsics.h"
-#include "proxy_wasm_intrinsics_lite.pb.h"
+//#include "proxy_wasm_intrinsics_lite.pb.h"
 
 #include "google/protobuf/util/json_util.h"
 
 #include "examples/wasm-websocket/api/api.pb.h"
-//#include "examples/envoy-wasm-websocket/filter.h"
+#include "examples/wasm-websocket/api/config.pb.h"
 #include "examples/wasm-websocket/handler.h"
 
 
 using api::WebSocketFrameRequest;
 using api::WebSocketFrameRequest;
-using api::Config;
+using config::Config;
 
 class MgwGrpcStreamHandler : public GrpcStreamHandler<WebSocketFrameRequest, WebSocketFrameRequest>, 
                                  public StreamHanlderClient {
@@ -35,6 +35,5 @@ class MgwGrpcStreamHandler : public GrpcStreamHandler<WebSocketFrameRequest, Web
 
   private:
     HandlerCallbacks *callbacks_;
-    HandlerState handler_state_;
 
 };

@@ -1,7 +1,9 @@
 // NOLINT(namespace-envoy)
 #include <algorithm>
+#include <google/protobuf/message.h>
 #include <google/protobuf/stubs/status.h>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -24,7 +26,7 @@ using google::protobuf::util::Status;
 
 using api::WebSocketFrameRequest;
 using api::WebSocketFrameResponse;
-using api::Config;
+using config::Config;
 
 
 static RegisterContextFactory register_MgwWebSocketContext(CONTEXT_FACTORY(MgwWebSocketContext),
@@ -38,14 +40,14 @@ bool MgwWebSocketRootContext::onStart(size_t) {
 
 bool MgwWebSocketRootContext::onConfigure(size_t config_size) {
   LOG_INFO("onConfigure called");
-  proxy_set_tick_period_milliseconds(1000); // 1 sec
+  proxy_set_tick_period_milliseconds(10000); // 1 sec
   const WasmDataPtr configuration = getBufferBytes(WasmBufferType::PluginConfiguration, 0, config_size);
 
     JsonParseOptions json_options;
-    const Status options_status = JsonStringToMessage(
+    // auto *c = dynamic_cast<google::protobuf::Message*>(&config_);
+    const Status options_status = google::protobuf::util::JsonStringToMessage(
         configuration->toString(),
-        &config_,
-        json_options);
+        &config_, json_options);
     if (options_status != Status::OK) {
       LOG_WARN("Cannot parse plugin configuration JSON string: " + configuration->toString());
       return false;
@@ -79,6 +81,68 @@ FilterHeadersStatus MgwWebSocketContext::onRequestHeaders(uint32_t, bool) {
     this->handler_state_ = HandlerState::OK;
     LOG_INFO(std::string(">>>>>>>>>>>>>>>>>>>> gRPC stream initiated"));     
   }
+  std::string jwt_string = "Hello !";
+  WebSocketFrameRequest request;
+  request.set_name(jwt_string);
+  google::protobuf::Struct metadata;
+  // auto buf1 = getProperty<std::string>({"metadata", "filter_metadata", "envoy.filters.http.ext_authz","envoy.filters.http.ext_authz"});
+  // if (buf1.has_value()) {
+  //   // if (buf1.value()->size() == 0) {
+  //   //   metadata = null;
+  //   // }
+  //   bool val = metadata.ParseFromArray(buf1.value()->data(), buf1.value()->size());
+  //   if (val == true){
+  //     LOG_INFO("TRUEEEEEEE");
+  //   }else{
+  //     LOG_INFO("FALSEEEE");
+  //   }
+  // }
+  
+  if (!getMessageValue<google::protobuf::Struct>(
+          {"dynamic_metadata", "filter_metadata", "envoy.filters.http.ext_authz"}, &metadata)) {
+    LOG_ERROR(std::string("filter_metadata Error ") + std::to_string(id()));
+  }
+
+  std::string api_key;
+  if (!getValue(
+          {"metadata", "filter_metadata", "envoy.filters.http.ext_authz", "apiKey"}, &api_key)) {
+    LOG_ERROR(std::string("filter_metadata Error ") + std::to_string(id()));
+  }
+  LOG_INFO("apikey ::::::::::"+ std::string(api_key));
+
+
+  // *request.mutable_ext_metadata() = metadata;
+  // if(this->handler_state_ == HandlerState::OK){
+  //   LOG_INFO(std::string("stream available sending message"));
+  //   auto res = this->stream_handler_->send(request, false);
+  //   if (res != WasmResult::Ok) {
+  //     LOG_INFO(std::string("error sending gRPC >>>>>>>")+ toString(res));
+  //   }
+  //   LOG_INFO(std::string("grpc sent:"+ toString(res)));
+  // }
+
+
+
+  // auto buf1 = getProperty<std::string>({"metadata", "filter_metadata", "envoy.filters.http.ext_authz"});
+  // if (buf1.has_value()){
+  //   decltype(buf1) type;
+  //   LOG_INFO("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM buf1");
+  // }
+
+  // auto buf2 = getProperty<std::string>({"metadata", "filter_metadata", "envoy.filters.http.ext_authz", "envoy.filters.http.ext_authz"});
+  // if (buf2.has_value()){
+  //   LOG_INFO("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM buf2");
+  // }
+
+  // auto buf3 = getProperty<std::string>({"metadata", "filter_metadata", "envoy.filters.http.ext_authz","apiKey"});
+  // if (buf3.has_value()){
+  //   LOG_INFO("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM buf3");
+  // }
+
+
+
+  
+  
   // auto result = getRequestHeaderPairs();
   // auto pairs = result->pairs();
   // LOG_INFO(std::string("headers: ") + std::to_string(pairs.size()));
@@ -135,17 +199,30 @@ FilterDataStatus MgwWebSocketContext::onRequestBody(size_t body_buffer_length,
                                                bool /* end_of_stream */) {
   auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
   LOG_INFO(std::string("onRequestBody ") + std::string(body->view()));
-  std::string jwt_string = "Hello !";
-  WebSocketFrameRequest request;
-  request.set_name(jwt_string);
-  if(this->handler_state_ == HandlerState::OK){
-    LOG_INFO(std::string("stream available sending message"));
-    auto res = this->stream_handler_->send(request, false);
-    if (res != WasmResult::Ok) {
-      LOG_INFO(std::string("error sending gRPC >>>>>>>")+ toString(res));
-    }
-    LOG_INFO(std::string("grpc sent:"+ toString(res)));
-  }
+  auto data = body->view();
+  int opcode = data[0] & 0x0F;
+  std::string s = std::to_string(opcode);
+  LOG_INFO(s);
+  // std::string jwt_string = "Hello !";
+  // WebSocketFrameRequest request;
+  // request.set_name(jwt_string);
+  // google::protobuf::Struct metadata;
+  // if (!getMessageValue<google::protobuf::Struct>(
+  //         {"metadata", "filter_metadata", "envoy.filters.http.ext_authz"}, &metadata)) {
+  //   LOG_ERROR(std::string("filter_metadata Error ") + std::to_string(id()));
+  // }
+  // *request.mutable_metadata() = metadata;
+  // if(this->handler_state_ == HandlerState::OK){
+  //   LOG_INFO(std::string("stream available sending message"));
+  //   auto res = this->stream_handler_->send(request, false);
+  //   if (res != WasmResult::Ok) {
+  //     LOG_INFO(std::string("error sending gRPC >>>>>>>")+ toString(res));
+  //   }
+  //   LOG_INFO(std::string("grpc sent:"+ toString(res)));
+  // }
+  
+  
+
   // if(this->is_stream_ == true){
   //   GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>* handler = dynamic_cast<std::unique_ptr<GrpcStreamHandler<google::protobuf::Value, google::protobuf::Value>>> (this->stream_handler_);
   //   if(handler != nullptr){
@@ -170,6 +247,7 @@ void MgwWebSocketContext::onDelete() {
   std::stringstream pointer_address;
   pointer_address << this->stream_handler_;
   LOG_INFO("handler pointer delete >>>"+ pointer_address.str());
+  this->stream_handler_->close();
  }
 
 // void ExampleContext::updateConnectionStatus(bool status){

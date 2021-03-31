@@ -2,12 +2,17 @@ syntax = "proto3";
 
 package api;
 
+option optimize_for = LITE_RUNTIME;
+
+import "struct_lite.proto";
+
 service EnforcerWebSocketService {
   rpc PublishFrameData(stream WebSocketFrameRequest) returns (stream WebSocketFrameResponse) {}    
 }
 
 message WebSocketFrameRequest {
   string name = 1;
+  google.protobuf.Struct ext_metadata = 2;
 }
 
 message WebSocketFrameResponse {
@@ -15,6 +20,6 @@ message WebSocketFrameResponse {
 }
 
 // this proto represents configuration for the example filter
-message Config {
-  string clustername = 1;
-}
+// message Config {
+//   string clustername = 1;
+// }

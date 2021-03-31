@@ -7,16 +7,18 @@
 #include <unordered_map>
 
 #include "proxy_wasm_intrinsics.h"
-#include "proxy_wasm_intrinsics_lite.pb.h"
+//#include "proxy_wasm_intrinsics_lite.pb.h"
 
 #include "google/protobuf/util/json_util.h"
 
 #include "examples/wasm-websocket/api/api.pb.h"
+#include "examples/wasm-websocket/api/config.pb.h"
+
 #include "examples/wasm-websocket/handler_impl.h"
 
 using api::WebSocketFrameRequest;
 using api::WebSocketFrameRequest;
-using api::Config;
+using config::Config;
 
 
 MgwGrpcStreamHandler::MgwGrpcStreamHandler(HandlerCallbacks *callbacks){
